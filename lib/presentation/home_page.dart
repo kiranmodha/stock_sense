@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:stock_sense/chart_response.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
@@ -13,12 +15,19 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _counter = 0;
-  String _text = "";
+  bool isLoaded = false;
+
+  ChartResponse? chartResponse;
 
   void _incrementCounter() {
-    access_token();
-    setState(() {
-      _counter++;
+    fetchData().then((value) {
+      if (value) {
+        setState(() {
+          // Your code here
+          _counter++;
+          isLoaded = true;
+        });
+      }
     });
   }
 
@@ -32,23 +41,91 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Center buildBody(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          const Text(
-            'You have pushed the button this many times:',
+  // Center buildBody(BuildContext context) {
+  //   chartResponse!.chart.result[0].indicators.quote[0].open;
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: <Widget>[
+  //         const Text(
+  //           'You have pushed the button this many times:',
+  //         ),
+  //         if (isLoaded && chartResponse != null)
+  //           Wrap(
+  //             children: [
+  //               Text(chartResponse!.chart.result[0].meta.symbol),
+  //               Text(convertTimestampToDateTime(
+  //                   chartResponse!.chart.result[0].timestamp[0])),
+  //             ],
+  //           ),
+  //         Text(
+  //           '$_counter',
+  //           style: Theme.of(context).textTheme.headlineMedium,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Center buildBody(BuildContext context) {
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: <Widget>[
+  //         const Text(
+  //           'You have pushed the button this many times:',
+  //         ),
+  //         if (isLoaded && chartResponse != null)
+  //           Wrap(
+  //             children: [
+  //               ...List.generate(
+  //                   5,
+  //                   (index) => Column(children: [
+  //                         Text(
+  //                             'Timestamp ${index + 1}: ${convertTimestampToDateTime(chartResponse!.stockData!.stockData15Minutes!.timestamp[index])}'),
+  //                         Text(
+  //                             'Open ${index + 1}: ${chartResponse!.stockData!.stockData15Minutes!.open[index]}'),
+  //                         Text(
+  //                             'Close ${index + 1}: ${chartResponse!.stockData!.stockData15Minutes!.close[index]}'),
+  //                       ])),
+  //             ],
+  //           ),
+
+  //         Text(
+  //           '$_counter',
+  //           style: Theme.of(context).textTheme.headlineMedium,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+Center buildBody(BuildContext context) {
+  return Center(
+    child: ListView.builder(
+      itemCount: chartResponse?.stockData?.stockData15Minutes?.timestamp.length ?? 0,
+      itemBuilder: (context, index) {
+        return Card(
+          child: ListTile(
+            title: Text('Timestamp: ${convertTimestampToDateTime(chartResponse!.stockData!.stockData15Minutes!.timestamp[index])}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Open: ${chartResponse!.stockData!.stockData15Minutes!.open[index]}'),
+                Text('Close: ${chartResponse!.stockData!.stockData15Minutes!.close[index]}'),
+                Text('High: ${chartResponse!.stockData!.stockData15Minutes!.high[index]}'),
+                Text('Low: ${chartResponse!.stockData!.stockData15Minutes!.low[index]}'),
+                Text('Volume: ${chartResponse!.stockData!.stockData15Minutes!.volume[index]}'),
+              ],
+            ),
           ),
-          Text(_text),
-          Text(
-            '$_counter',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-        ],
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
+
+
 
   FloatingActionButton buildFloatingActionButton() {
     return FloatingActionButton(
@@ -65,117 +142,63 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void callApi() async {
-    var url = Uri.https('apiconnect.angelbroking.com',
-        'rest/secure/angelbroking/market/v1/quote/');
-
-    var headers = {
-      'X-PrivateKey': 'OTnz1SyD',
-      'Accept': 'application/json',
-      'X-SourceID': 'WEB',
-      'X-ClientLocalIP': '192.168.168.168',
-      'X-ClientPublicIP': '106.193.147.98',
-      'X-MACAddress': 'fe80::216e:6507:4b90:3719',
-      'X-UserType': 'USER',
-      'Authorization':
-          'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6IkQ4OD MiLCJyb2xlcyI6MCwidXNlcnR5cGUiOiJVU0VSIiwia WF0IjoxNTk5NzEyNjk4LCJleHAiOjE1OTk3MjE2OTh 9.qHZEkOMokMktybarQO3m4NMRVQlF0vvN7rh2lC Rkjd2sCYBq3JnOq0yWWOS5Ux_H0pvvt4-ibSmb5H JoKJHOUw',
-      'Content-Type': 'application/json'
-    };
-
-    var payload = {
-      "mode": "FULL",
-      "exchangeTokens": {
-        "NSE": ["3045"]
+  Future<bool> fetchData() async {
+    const String url =
+        'https://query2.finance.yahoo.com/v8/finance/chart/HDFCBANK.NS';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        Map<String, dynamic> data = json.decode(response.body);
+        chartResponse = ChartResponse.fromJson(data);
+        return true;
+      } else {
+        print('Failed to fetch data. Status code: ${response.statusCode}');
       }
-    };
-
-    print('hello');
-    var response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode(payload),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    //return response.body;
-    setState(() {
-      _text = response.body;
-    });
-  }
-
-  void callApi1() async {
-    // Replace 'YOUR_API_KEY' with your actual API key
-    var apiKey = 'OTnz1SyDPI_KEY';
-    var url = Uri.https('apiconnect.angelbroking.com',
-        'rest/secure/angelbroking/market/v1/quote/');
-
-    var headers = {
-      'X-PrivateKey': apiKey,
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-
-    var payload = {
-      "mode": "FULL",
-      "exchangeTokens": {
-        "NSE": ["12322"] // Replace with the desired stock symbol
-      }
-    };
-
-    var response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode(payload),
-    );
-
-    if (response.statusCode == 200) {
-      print('Response body: ${response.body}');
-      // Process the response data as needed
-    } else {
-      print('Error: ${response.statusCode}');
-      print('Response body: ${response.body}');
+    } catch (error) {
+      print('Error: $error');
     }
-    setState(() {
-      _text = response.body;
-    });
+    return false;
   }
 
-  void access_token() async {
-    var apiKey = 'OTnz1SyDPI_KEY';
-    var authUrl = Uri.parse(
-        'https://apiconnect.angelbroking.com/rest/auth/angelbroking/user/v1/loginByPassword');
-
-    var authHeaders = {
-      'Content-Type': 'application/json',
-    };
-
-    var authPayload = {
-      'clientcode': 'kiranmodha@gmail.com',
-      'password': 'Angel1234',
-      'appid': 'TradingApp',
-      'apikey': apiKey,
-    };
-
-    var authResponse = await http.post(
-      authUrl,
-      headers: authHeaders,
-      body: jsonEncode(authPayload),
-    );
-
-    if (authResponse.statusCode == 200) {
-      var authToken = jsonDecode(authResponse.body)['data']['accessToken'];
-      print('Authentication successful. Token: $authToken');
-
-      // Now you can use authToken in your subsequent requests
-    } else {
-      print('Authentication error: ${authResponse.statusCode}');
-      print('Response body: ${authResponse.body}');
-    }
-
-        setState(() {
-      _text = authResponse.body;
-    });
+  String getISTFromTimeStamp(int timeStamp) {
+    final dateTime =
+        DateTime.fromMillisecondsSinceEpoch(timeStamp * 1000).toUtc();
+    final istDateTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+    return DateFormat('yyyy-MM-dd HH:mm:ss').format(istDateTime);
   }
+
+  String convertTimestampToDateTime(int timestamp) {
+    // Convert timestamp to DateTime
+    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    // Add the IST offset (5 hours and 30 minutes)
+    // dateTime = dateTime.add(const Duration(hours: 5, minutes: 30));
+    // Format the DateTime to a human-readable string
+    String formattedDateTime = dateTime.toLocal().toString();
+    return formattedDateTime;
+  }
+
+//To get data in CSV format
+//https://query1.finance.yahoo.com/v7/finance/download/HDFCBANK.NS?period1=1673974171;period2=1705510171;interval=1d;events=history;includeAdjustedClose=true
 }
+
+//import 'dart:core';
+
+String convertTimestampToDateTime(int timestamp) {
+  // Convert timestamp to DateTime
+  DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+
+  // Add the IST offset (5 hours and 30 minutes)
+  dateTime = dateTime.add(Duration(hours: 5, minutes: 30));
+
+  // Format the DateTime to a human-readable string
+  String formattedDateTime = dateTime.toLocal().toString();
+
+  return formattedDateTime;
+}
+
+// void main() {
+//   int timestamp = 1705463100;
+//   String result = convertTimestampToDateTime(timestamp);
+//   print(result);  // Output: 2024-01-17 09:15:00.000
+// }

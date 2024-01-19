@@ -1,3 +1,8 @@
+
+
+
+
+
 import 'package:flutter/material.dart';
 import 'package:stock_sense/presentation/home_page.dart';
 
@@ -26,7 +31,7 @@ class MainApp extends StatelessWidget {
   }
 
 
-  
+
 }
 
 
