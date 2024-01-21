@@ -1,10 +1,9 @@
+
 class ChartResponse {
   final Chart chart;
-  StockData? stockData;
+  final Stock stock;
 
-  ChartResponse({required this.chart}) {
-    stockData = _stockData();
-  }
+  ChartResponse({required this.chart}) : stock = _stock(chart);
 
   factory ChartResponse.fromJson(Map<String, dynamic> json) {
     return ChartResponse(
@@ -12,8 +11,8 @@ class ChartResponse {
     );
   }
 
-  StockData _stockData() {
-    return StockData(
+  static Stock _stock(Chart chart) {
+    return Stock(
       symbol: chart.result[0].meta.symbol,
       exchangeName: chart.result[0].meta.exchangeName,
       instrumentType: chart.result[0].meta.instrumentType,
@@ -38,17 +37,6 @@ class ChartResponse {
   List<Quote> quotes() {
     return chart.result[0].indicators.quote;
   }
-
-  // List<Map<String, dynamic>> mergeTimestampIntoQuotes() {
-  //   List<Map<String, dynamic>> mergedList = [];
-  //   for (int i = 0; i < chart.result[0].timestamp.length; i++) {
-  //     Map<String, dynamic> mergedItem = quotes()[i];
-  //     mergedItem['timestamp'] =
-  //         convertTimestampToDateTime(chart.result[0].timestamp[i]);
-  //     mergedList.add(mergedItem);
-  //   }
-  //   return mergedList;
-  // }
 }
 
 class Chart {
@@ -243,7 +231,7 @@ class Quote {
   factory Quote.fromJson(Map<String, dynamic> json) {
     return Quote(
       low: (json['low'] as List<dynamic>)
-          .map((e) => e ?? double.nan)   // to take care on null value
+          .map((e) => e ?? double.nan) // to take care on null value
           .cast<double>()
           .toList(),
       volume: (json['volume'] as List<dynamic>)
@@ -266,7 +254,7 @@ class Quote {
   }
 }
 
-class StockData {
+class Stock {
   final String symbol;
   final String exchangeName;
   final String instrumentType;
@@ -281,9 +269,9 @@ class StockData {
   final List<double?> high;
   final List<double?> open;
   final List<double?> close;
-  StockData15Minutes? stockData15Minutes;
+  Data15Minutes data15Minutes;
 
-  StockData({
+  Stock({
     required this.symbol,
     required this.exchangeName,
     required this.instrumentType,
@@ -298,8 +286,9 @@ class StockData {
     required this.high,
     required this.open,
     required this.close,
-  }) {
-    populateStockData_15Minutes(this);
+  }) : data15Minutes = Data15Minutes(
+            timestamp: [], low: [], volume: [], high: [], open: [], close: []) {
+    populateData_15Minutes(this);
   }
 
   double? maxNonNull(List<double?> values) {
@@ -327,7 +316,7 @@ class StockData {
     return values.isNotEmpty ? values.reduce((a, b) => a! + b!) : 0;
   }
 
-  void populateStockData_15Minutes(StockData data) {
+  void populateData_15Minutes(Stock data) {
     List<int> timestamp = [];
     List<double?> low = [];
     List<int?> volume = [];
@@ -358,7 +347,7 @@ class StockData {
       close.add(lastNonNull(chunkClose));
     }
 
-    stockData15Minutes = StockData15Minutes(
+    data15Minutes = Data15Minutes(
       timestamp: timestamp,
       low: low,
       volume: volume,
@@ -369,7 +358,7 @@ class StockData {
   }
 }
 
-class StockData15Minutes {
+class Data15Minutes {
   final List<int> timestamp;
   final List<double?> low;
   final List<int?> volume;
@@ -377,7 +366,7 @@ class StockData15Minutes {
   final List<double?> open;
   final List<double?> close;
 
-  StockData15Minutes({
+  Data15Minutes({
     required this.timestamp,
     required this.low,
     required this.volume,

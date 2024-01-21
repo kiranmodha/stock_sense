@@ -14,7 +14,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _counter = 0;
   bool isLoaded = false;
 
   ChartResponse? chartResponse;
@@ -24,7 +23,6 @@ class _HomePageState extends State<HomePage> {
       if (value) {
         setState(() {
           // Your code here
-          _counter++;
           isLoaded = true;
         });
       }
@@ -41,104 +39,59 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Center buildBody(BuildContext context) {
-  //   chartResponse!.chart.result[0].indicators.quote[0].open;
-  //   return Center(
-  //     child: Column(
-  //       mainAxisAlignment: MainAxisAlignment.center,
-  //       children: <Widget>[
-  //         const Text(
-  //           'You have pushed the button this many times:',
-  //         ),
-  //         if (isLoaded && chartResponse != null)
-  //           Wrap(
-  //             children: [
-  //               Text(chartResponse!.chart.result[0].meta.symbol),
-  //               Text(convertTimestampToDateTime(
-  //                   chartResponse!.chart.result[0].timestamp[0])),
-  //             ],
-  //           ),
-  //         Text(
-  //           '$_counter',
-  //           style: Theme.of(context).textTheme.headlineMedium,
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  AppBar buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      title: Text(widget.title),
+    );
+  }
 
-  // Center buildBody(BuildContext context) {
-  //   return Center(
-  //     child: Column(
-  //       mainAxisAlignment: MainAxisAlignment.center,
-  //       children: <Widget>[
-  //         const Text(
-  //           'You have pushed the button this many times:',
-  //         ),
-  //         if (isLoaded && chartResponse != null)
-  //           Wrap(
-  //             children: [
-  //               ...List.generate(
-  //                   5,
-  //                   (index) => Column(children: [
-  //                         Text(
-  //                             'Timestamp ${index + 1}: ${convertTimestampToDateTime(chartResponse!.stockData!.stockData15Minutes!.timestamp[index])}'),
-  //                         Text(
-  //                             'Open ${index + 1}: ${chartResponse!.stockData!.stockData15Minutes!.open[index]}'),
-  //                         Text(
-  //                             'Close ${index + 1}: ${chartResponse!.stockData!.stockData15Minutes!.close[index]}'),
-  //                       ])),
-  //             ],
-  //           ),
-
-  //         Text(
-  //           '$_counter',
-  //           style: Theme.of(context).textTheme.headlineMedium,
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-Center buildBody(BuildContext context) {
-  return Center(
-    child: ListView.builder(
-      itemCount: chartResponse?.stockData?.stockData15Minutes?.timestamp.length ?? 0,
-      itemBuilder: (context, index) {
-        return Card(
-          child: ListTile(
-            title: Text('Timestamp: ${convertTimestampToDateTime(chartResponse!.stockData!.stockData15Minutes!.timestamp[index])}'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Open: ${chartResponse!.stockData!.stockData15Minutes!.open[index]}'),
-                Text('Close: ${chartResponse!.stockData!.stockData15Minutes!.close[index]}'),
-                Text('High: ${chartResponse!.stockData!.stockData15Minutes!.high[index]}'),
-                Text('Low: ${chartResponse!.stockData!.stockData15Minutes!.low[index]}'),
-                Text('Volume: ${chartResponse!.stockData!.stockData15Minutes!.volume[index]}'),
-              ],
+  Center buildBody(BuildContext context) {
+    return Center(
+      child: ListView.builder(
+        itemCount: chartResponse?.stock.data15Minutes.timestamp.length ?? 0,
+        itemBuilder: (context, index) {
+          return Card(
+            child: ListTile(
+              leading: Text(convertTimestampToTime(
+                  chartResponse!.stock.data15Minutes.timestamp[index])),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      'Open: ${formatDouble(chartResponse!.stock.data15Minutes.open[index])}'),
+                  Text(
+                      'High: ${formatDouble(chartResponse!.stock.data15Minutes.high[index])}'),
+                  Text(
+                      'Low: ${formatDouble(chartResponse!.stock.data15Minutes.low[index])}'),
+                  Text(
+                      'Close: ${formatDouble(chartResponse!.stock.data15Minutes.close[index])}'),
+                  Text(
+                      'Volume: ${chartResponse!.stock.data15Minutes.volume[index]}'),
+                ],
+              ),
+              trailing: (chartResponse!.stock.data15Minutes.close[index]! <
+                      chartResponse!.stock.data15Minutes.open[index]!)
+                  ? const Icon(
+                      Icons.arrow_downward,
+                      color: Colors.red,
+                    )
+                  : const Icon(
+                      Icons.arrow_upward,
+                      color: Colors.green,
+                    ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
-
-
+          );
+        },
+      ),
+    );
+  }
 
   FloatingActionButton buildFloatingActionButton() {
     return FloatingActionButton(
       onPressed: _incrementCounter,
       tooltip: 'Increment',
       child: const Icon(Icons.add),
-    );
-  }
-
-  AppBar buildAppBar(BuildContext context) {
-    return AppBar(
-      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      title: Text(widget.title),
     );
   }
 
@@ -182,8 +135,6 @@ Center buildBody(BuildContext context) {
 //https://query1.finance.yahoo.com/v7/finance/download/HDFCBANK.NS?period1=1673974171;period2=1705510171;interval=1d;events=history;includeAdjustedClose=true
 }
 
-//import 'dart:core';
-
 String convertTimestampToDateTime(int timestamp) {
   // Convert timestamp to DateTime
   DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
@@ -197,8 +148,12 @@ String convertTimestampToDateTime(int timestamp) {
   return formattedDateTime;
 }
 
-// void main() {
-//   int timestamp = 1705463100;
-//   String result = convertTimestampToDateTime(timestamp);
-//   print(result);  // Output: 2024-01-17 09:15:00.000
-// }
+String convertTimestampToTime(int timestamp) {
+  DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+  String formattedTime = DateFormat('HH:mm').format(dateTime);
+  return formattedTime;
+}
+
+String formatDouble(double? value) {
+  return value!.toStringAsFixed(2);
+}
