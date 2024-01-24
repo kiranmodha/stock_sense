@@ -1,18 +1,9 @@
-
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:stock_sense/presentation/home_page.dart';
-
 
 void main() {
   runApp(const MainApp());
 }
-
-
-
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
@@ -29,12 +20,4 @@ class MainApp extends StatelessWidget {
       home: const HomePage(title: 'Flutter Demo Home Page'),
     );
   }
-
-
-
 }
-
-
-
-
-

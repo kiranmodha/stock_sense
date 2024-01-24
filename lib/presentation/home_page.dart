@@ -58,16 +58,32 @@ class _HomePageState extends State<HomePage> {
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                      'Open: ${formatDouble(chartResponse!.stock.data15Minutes.open[index])}'),
-                  Text(
-                      'High: ${formatDouble(chartResponse!.stock.data15Minutes.high[index])}'),
-                  Text(
-                      'Low: ${formatDouble(chartResponse!.stock.data15Minutes.low[index])}'),
-                  Text(
-                      'Close: ${formatDouble(chartResponse!.stock.data15Minutes.close[index])}'),
-                  Text(
-                      'Volume: ${chartResponse!.stock.data15Minutes.volume[index]}'),
+                  Row(
+                    children: [
+                      const Column(
+                        children: [
+                          Text('open'),
+                          Text('high'),
+                          Text('low'),
+                          Text('close'),
+                          Text('volume')
+                        ],
+                      ),
+                      const SizedBox(width: 20),
+                      Column(children: [
+                        Text(formatDouble(
+                            chartResponse!.stock.data15Minutes.open[index])),
+                        Text(formatDouble(
+                            chartResponse!.stock.data15Minutes.high[index])),
+                        Text(formatDouble(
+                            chartResponse!.stock.data15Minutes.low[index])),
+                        Text(formatDouble(
+                            chartResponse!.stock.data15Minutes.close[index])),
+                        Text(
+                            '${chartResponse!.stock.data15Minutes.volume[index]}'),
+                      ])
+                    ],
+                  )
                 ],
               ),
               trailing: (chartResponse!.stock.data15Minutes.close[index]! <
